@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --surface: 255 255 255;
+    --surface-raised: 255 255 255;
+    --surface-sunken: 246 247 249;
+    --border: 226 229 234;
+    --content: 24 28 35;
+    --content-muted: 90 98 112;
+    --content-subtle: 138 146 160;
+
+    --brand: 29 78 216;
+    --brand-hover: 30 64 175;
+    --brand-subtle: 231 238 254;
+
+    --positive: 21 128 61;
+    --positive-subtle: 226 244 232;
+    --warning: 161 98 7;
+    --warning-subtle: 253 243 219;
+    --danger: 185 28 28;
+    --danger-subtle: 254 232 232;
+    --info: 3 105 161;
+    --info-subtle: 224 242 254;
+
+    --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  .dark {
+    --surface: 17 20 26;
+    --surface-raised: 24 28 36;
+    --surface-sunken: 12 14 19;
+    --border: 42 48 60;
+    --content: 236 239 244;
+    --content-muted: 158 166 180;
+    --content-subtle: 118 126 140;
+
+    --brand: 96 143 250;
+    --brand-hover: 129 166 252;
+    --brand-subtle: 27 40 68;
+
+    --positive: 74 190 118;
+    --positive-subtle: 20 45 32;
+    --warning: 224 168 62;
+    --warning-subtle: 51 40 16;
+    --danger: 248 113 113;
+    --danger-subtle: 56 24 24;
+    --info: 96 178 235;
+    --info-subtle: 18 38 54;
+  }
+
+  * {
+    border-color: rgb(var(--border));
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: rgb(var(--surface-sunken));
+    color: rgb(var(--content));
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv02', 'cv03', 'cv04';
+  }
+
+  /* A visible focus ring is a requirement, not a nicety — the seat grid and
+     data tables are navigated by keyboard in day-to-day use. */
+  :focus-visible {
+    outline: 2px solid rgb(var(--brand));
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: rgb(var(--brand) / 0.2);
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-card border border-border bg-surface-raised shadow-card;
+  }
+
+  .input-base {
+    @apply w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-content
+           placeholder:text-content-subtle
+           focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/25
+           disabled:cursor-not-allowed disabled:bg-surface-sunken disabled:text-content-subtle;
+  }
+
+  .table-cell {
+    @apply px-4 py-3 text-sm;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in {
+      animation: none;
+    }
+  }
+}

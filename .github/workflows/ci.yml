@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A newer push to the same branch supersedes an in-flight run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint, typecheck, test, build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build shared package
+        run: npm run build:shared
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Production build
+        run: npm run build
+        env:
+          # Build-time placeholders only. Real secrets live in Railway and are
+          # never needed to compile the application.
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+          NEXT_PUBLIC_API_URL: http://localhost:4000
+
+  secrets-scan:
+    name: Check for committed secrets
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fail if an .env file was committed
+        run: |
+          if git ls-files --error-unmatch '.env' '**/.env' '**/.env.local' 2>/dev/null; then
+            echo "::error::An environment file is tracked by git. Remove it and rotate the credentials."
+            exit 1
+          fi
+          echo "No tracked environment files."
+
+      - name: Fail on obvious credential patterns
+        run: |
+          # Supabase service-role keys and Postgres URLs with inline passwords
+          # must never reach the repository.
+          if git grep -nIE 'SUPABASE_SERVICE_ROLE_KEY[[:space:]]*=[[:space:]]*[A-Za-z0-9._-]{20,}' -- ':!.env.example' ':!.github'; then
+            echo "::error::A service role key appears to be committed."
+            exit 1
+          fi
+          if git grep -nIE 'postgres(ql)?://[^:@[:space:]]+:[^@[:space:]]+@' -- ':!.env.example' ':!docs' ':!.github'; then
+            echo "::error::A database URL with an inline password appears to be committed."
+            exit 1
+          fi
+          echo "No credential patterns found."

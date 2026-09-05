@@ -1,0 +1,14 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "npm ci && npm run build -w @manas/shared && npm run build -w @manas/web"
+  },
+  "deploy": {
+    "startCommand": "npm run start -w @manas/web",
+    "healthcheckPath": "/login",
+    "healthcheckTimeout": 30,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 5
+  }
+}
