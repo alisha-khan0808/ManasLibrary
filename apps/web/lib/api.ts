@@ -1,5 +1,7 @@
 import type { ApiResponse, PaginationMeta } from '@manas/shared';
 import { getAccessToken } from './supabase/server';
+import { IS_DEMO_MODE } from './demo/config';
+import { resolveDemoRequest } from './demo/resolver';
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000').replace(/\/$/, '');
 
@@ -31,6 +33,22 @@ export async function apiFetch<T>(
   path: string,
   init: RequestInit & { query?: Record<string, unknown> } = {},
 ): Promise<ApiResult<T>> {
+  // Demo mode serves every read from fixtures so the UI can be reviewed
+  // before a backend exists. Unreachable in a production build.
+  if (IS_DEMO_MODE) {
+    const resolved = resolveDemoRequest(path, init.query ?? {});
+
+    if (!resolved) {
+      throw new ApiRequestError(
+        404,
+        'NOT_FOUND',
+        `No demo fixture is defined for ${path}.`,
+      );
+    }
+
+    return { data: resolved.data as T, meta: resolved.meta, message: resolved.message };
+  }
+
   const token = await getAccessToken();
   const url = new URL(`${API_URL}/api/v1${path.startsWith('/') ? path : `/${path}`}`);
 

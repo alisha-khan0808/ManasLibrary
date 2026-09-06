@@ -3,6 +3,7 @@ import type { AppUser, Branch } from '@manas/shared';
 import { apiFetch, ApiRequestError } from '@/lib/api';
 import { SessionProvider } from '@/components/SessionProvider';
 import { AppShell } from '@/components/AppShell';
+import { IS_DEMO_MODE } from '@/lib/demo/config';
 
 /**
  * Authenticated shell.
@@ -48,6 +49,19 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <SessionProvider user={user} branches={branches}>
+      {IS_DEMO_MODE && (
+        <div
+          role="status"
+          className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 bg-warning px-4 py-1.5 text-center text-xs font-medium text-white"
+        >
+          <span>
+            Demo mode — sample data, no sign-in, nothing is saved. Not a working system.
+          </span>
+          <a href="/login" className="underline underline-offset-2">
+            Back to sign-in
+          </a>
+        </div>
+      )}
       <AppShell>{children}</AppShell>
     </SessionProvider>
   );

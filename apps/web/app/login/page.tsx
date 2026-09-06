@@ -12,7 +12,7 @@ export default function LoginPage() {
           <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-brand text-lg font-bold text-white">
             M
           </div>
-          <h1 className="text-xl font-semibold tracking-tight text-content">Manas Library</h1>
+          <h1 className="wordmark text-2xl text-brand">Manas Library</h1>
           <p className="mt-1 text-sm text-content-muted">
             Sign in to your branch management console
           </p>

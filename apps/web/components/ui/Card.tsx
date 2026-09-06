@@ -20,7 +20,7 @@ export function Card({
   return (
     <section className={clsx('card overflow-hidden', className)}>
       {(title || action) && (
-        <header className="flex items-start justify-between gap-4 border-b border-border px-5 py-3.5">
+        <header className="flex items-start justify-between gap-3 border-b border-border px-4 py-3 sm:gap-4 sm:px-5 sm:py-3.5">
           <div>
             {title && <h2 className="text-sm font-semibold text-content">{title}</h2>}
             {description && (
@@ -30,7 +30,7 @@ export function Card({
           {action}
         </header>
       )}
-      <div className={clsx(padded && 'p-5')}>{children}</div>
+      <div className={clsx(padded && 'p-4 sm:p-5')}>{children}</div>
     </section>
   );
 }
@@ -63,7 +63,7 @@ export function StatCard({
   const content = (
     <>
       <p className="text-xs font-medium uppercase tracking-wide text-content-subtle">{label}</p>
-      <p className={clsx('mt-2 text-2xl font-semibold tabular-nums', toneClass)}>
+      <p className={clsx('mt-1.5 text-xl font-semibold tabular-nums sm:mt-2 sm:text-2xl', toneClass)}>
         {typeof value === 'number' ? formatNumber(value) : value}
       </p>
       {hint && <p className="mt-1 text-xs text-content-muted">{hint}</p>}
@@ -74,14 +74,14 @@ export function StatCard({
     return (
       <a
         href={href}
-        className="card block p-5 transition-colors hover:border-brand/40 hover:bg-surface-sunken/40"
+        className="card block p-4 transition-colors sm:p-5 hover:border-brand/40 hover:bg-surface-sunken/40"
       >
         {content}
       </a>
     );
   }
 
-  return <div className="card p-5">{content}</div>;
+  return <div className="card p-4 sm:p-5">{content}</div>;
 }
 
 export function PageHeader({
@@ -94,9 +94,9 @@ export function PageHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-3 sm:mb-6 sm:gap-4">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-content">{title}</h1>
+        <h1 className="text-lg font-semibold tracking-tight text-content sm:text-xl">{title}</h1>
         {description && <p className="mt-1 text-sm text-content-muted">{description}</p>}
       </div>
       {action && <div className="flex items-center gap-2">{action}</div>}

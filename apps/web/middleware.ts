@@ -11,7 +11,16 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 
 const PUBLIC_PATHS = ['/login', '/forgot-password', '/reset-password', '/auth'];
 
+const IS_DEMO_MODE =
+  process.env.NEXT_PUBLIC_DEMO_MODE === 'true' && process.env.NODE_ENV !== 'production';
+
 export async function middleware(request: NextRequest) {
+  // Demo mode has no Supabase project to talk to, so there is no session to
+  // check and nothing to redirect. Every route renders from fixtures.
+  if (IS_DEMO_MODE) {
+    return NextResponse.next({ request: { headers: request.headers } });
+  }
+
   let response = NextResponse.next({ request: { headers: request.headers } });
 
   const supabase = createServerClient(

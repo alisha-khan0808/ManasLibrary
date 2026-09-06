@@ -79,7 +79,7 @@ export default async function DashboardPage({
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <StatCard
           label="Active students"
           value={metrics.activeStudents}
@@ -106,7 +106,7 @@ export default async function DashboardPage({
         />
       </div>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:mt-4 sm:gap-4 xl:grid-cols-4">
         <StatCard
           label="Pending fees"
           value={formatMoney(metrics.pendingFees)}
@@ -136,7 +136,7 @@ export default async function DashboardPage({
         )}
       </div>
 
-      <div className="mt-6 grid gap-4 xl:grid-cols-3">
+      <div className="mt-5 grid gap-4 sm:mt-6 xl:grid-cols-3">
         <Card
           title="Last 14 days"
           description="Daily collection, attendance and new admissions"

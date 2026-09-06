@@ -95,12 +95,12 @@ export function FilterSelect({
   const value = searchParams.get(paramName) ?? '';
 
   return (
-    <label className="flex items-center gap-2 text-sm">
+    <label className="flex w-full items-center gap-2 text-sm sm:w-auto">
       <span className="whitespace-nowrap text-content-muted">{label}</span>
       <select
         value={value}
         onChange={(event) => setParam({ [paramName]: event.target.value || undefined })}
-        className="input-base h-9 w-auto min-w-[9rem] py-1"
+        className="input-base h-9 w-full min-w-0 py-1 sm:w-auto sm:min-w-[9rem]"
       >
         <option value="">{allLabel}</option>
         {options.map((option) => (
@@ -117,13 +117,13 @@ export function DateFilter({ paramName, label }: { paramName: string; label: str
   const { searchParams, setParam } = useQueryFilters();
 
   return (
-    <label className="flex items-center gap-2 text-sm">
+    <label className="flex w-full items-center gap-2 text-sm sm:w-auto">
       <span className="whitespace-nowrap text-content-muted">{label}</span>
       <input
         type="date"
         value={searchParams.get(paramName) ?? ''}
         onChange={(event) => setParam({ [paramName]: event.target.value || undefined })}
-        className="input-base h-9 w-auto py-1"
+        className="input-base h-9 w-full min-w-0 py-1 sm:w-auto"
       />
     </label>
   );
@@ -134,7 +134,7 @@ export function FilterBar({ children }: { children: ReactNode }) {
   const hasFilters = Array.from(searchParams.keys()).some((key) => key !== 'page');
 
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-3">
+    <div className="mb-4 flex flex-wrap items-center gap-2 sm:gap-3">
       {children}
       {hasFilters && (
         <Button
@@ -176,7 +176,7 @@ export function Pagination({
   return (
     <nav
       aria-label="Pagination"
-      className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-3 text-sm"
+      className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 text-sm sm:px-5"
     >
       <p className="text-content-muted">
         Showing <span className="font-medium text-content">{from}</span>–

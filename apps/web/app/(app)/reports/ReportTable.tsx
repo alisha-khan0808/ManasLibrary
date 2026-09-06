@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+import { IS_DEMO_MODE } from '@/lib/demo/config';
 import { useToast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -86,6 +87,11 @@ export function ReportTable({
   const displayColumns = columns.filter((key) => key !== 'id');
 
   async function exportCsv() {
+    if (IS_DEMO_MODE) {
+      toast.error('CSV export needs the API. Not available in demo mode.');
+      return;
+    }
+
     setDownloading(true);
 
     try {

@@ -43,7 +43,7 @@ export function BranchSwitcher() {
         value={current}
         onChange={(event) => onChange(event.target.value)}
         aria-label="Select branch"
-        className="input-base h-9 w-auto max-w-[16rem] py-1 text-sm"
+        className="input-base h-9 w-auto max-w-[9rem] py-1 text-sm sm:max-w-[16rem]"
       >
         <option value="">
           {isSuperAdmin ? 'All branches' : 'All my branches'}

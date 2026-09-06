@@ -57,7 +57,7 @@ export function GlobalSearch() {
   }, []);
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative min-w-0 flex-1 sm:flex-none">
       <input
         type="search"
         value={query}
@@ -68,14 +68,14 @@ export function GlobalSearch() {
         role="combobox"
         aria-expanded={open}
         aria-controls="global-search-results"
-        className="input-base h-9 w-44 py-1 text-sm focus:w-64 sm:w-56 sm:focus:w-80"
+        className="input-base h-9 w-full min-w-0 py-1 text-sm sm:w-56 sm:focus:w-80"
       />
 
       {open && query.trim().length >= 2 && (
         <div
           id="global-search-results"
           role="listbox"
-          className="absolute right-0 top-11 z-50 w-[22rem] overflow-hidden rounded-card border border-border bg-surface-raised shadow-overlay"
+          className="absolute right-0 top-11 z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-card border border-border bg-surface-raised shadow-overlay"
         >
           {loading && results.length === 0 ? (
             <p className="px-4 py-6 text-center text-sm text-content-muted">Searching…</p>

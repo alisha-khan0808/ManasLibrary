@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { InputField } from '@/components/ui/Field';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+import { IS_DEMO_MODE } from '@/lib/demo/config';
 
 export function LoginForm() {
   const router = useRouter();
@@ -28,9 +29,19 @@ export function LoginForm() {
     });
 
     if (signInError) {
-      // Deliberately generic: distinguishing "no such user" from "wrong
-      // password" would let anyone enumerate staff accounts.
-      setError('Those credentials did not work. Check your email and password.');
+      // A network failure is not a credential failure — telling someone to
+      // check their password when the auth host is unreachable sends them
+      // debugging the wrong thing.
+      const unreachable =
+        signInError.name === 'AuthRetryableFetchError' || signInError.status === 0;
+
+      setError(
+        unreachable
+          ? 'Could not reach the authentication server. Check your connection and that Supabase is configured.'
+          : // Otherwise deliberately generic: distinguishing "no such user"
+            // from "wrong password" would let anyone enumerate staff accounts.
+            'Those credentials did not work. Check your email and password.',
+      );
       setLoading(false);
       return;
     }
@@ -84,6 +95,26 @@ export function LoginForm() {
           Forgot your password?
         </Link>
       </div>
+
+      {IS_DEMO_MODE && (
+        <div className="space-y-3 border-t border-border pt-4">
+          <Button
+            type="button"
+            variant="secondary"
+            size="lg"
+            className="w-full"
+            onClick={() => {
+              router.push('/dashboard');
+              router.refresh();
+            }}
+          >
+            Explore the demo
+          </Button>
+          <p className="text-center text-xs text-content-muted">
+            Opens the interface with sample data. No sign-in, nothing saved.
+          </p>
+        </div>
+      )}
     </form>
   );
 }

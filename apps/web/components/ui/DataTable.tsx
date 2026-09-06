@@ -60,8 +60,38 @@ export function DataTable<T>({
     );
   }
 
+  // The first column is the row's identity (name, invoice number, seat) in
+  // every list, so it becomes the card heading and the rest become labelled
+  // rows. Doing this here means no page has to define a second layout.
+  const [leadColumn, ...restColumns] = columns;
+
   return (
-    <div className="overflow-x-auto scrollbar-thin">
+    <>
+      <ul className="divide-y divide-border md:hidden">
+        {rows.map((row) => (
+          <li key={rowKey(row)} className="px-4 py-3.5">
+            {leadColumn && (
+              <div className="text-sm font-medium text-content">
+                {leadColumn.render(row)}
+              </div>
+            )}
+            {restColumns.length > 0 && (
+              <dl className="mt-2 grid grid-cols-[minmax(0,7rem)_1fr] gap-x-3 gap-y-1.5">
+                {restColumns.map((column) => (
+                  <div key={column.key} className="contents">
+                    <dt className="text-[11px] uppercase tracking-wide text-content-subtle">
+                      {column.header}
+                    </dt>
+                    <dd className="min-w-0 text-sm text-content">{column.render(row)}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+          </li>
+        ))}
+      </ul>
+
+      <div className="hidden overflow-x-auto scrollbar-thin md:block">
       <table className="w-full min-w-full border-collapse">
         {caption && <caption className="sr-only">{caption}</caption>}
         <thead>
@@ -106,6 +136,7 @@ export function DataTable<T>({
           ))}
         </tbody>
       </table>
-    </div>
+      </div>
+    </>
   );
 }

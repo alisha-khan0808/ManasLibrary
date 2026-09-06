@@ -20,38 +20,78 @@ export function formatNumber(value: number | null | undefined): string {
   return numberFormat.format(value ?? 0);
 }
 
+/**
+ * Dates are assembled by hand rather than through `toLocaleDateString`.
+ *
+ * Locale formatting is not stable across ICU builds — Node renders en-IN as
+ * "26-Sept-2026" while Chrome renders "26 Sept 2026" — which makes the server
+ * and client markup disagree and throws a React hydration error. Only numeric
+ * parts are read from Intl (those are stable); the month name and separators
+ * come from the table below.
+ */
+const MONTHS = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+] as const;
+
+/** Timestamps are rendered in one fixed zone so every viewer agrees. */
+const DISPLAY_TIME_ZONE = process.env.NEXT_PUBLIC_DISPLAY_TIMEZONE ?? 'Asia/Kolkata';
+
+function zonedParts(date: Date): Record<string, string> {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: DISPLAY_TIME_ZONE,
+    year: 'numeric',
+    month: 'numeric',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
+
+  return Object.fromEntries(parts.map((part) => [part.type, part.value]));
+}
+
 export function formatDate(value: string | null | undefined): string {
   if (!value) return '—';
-  const date = new Date(value.length === 10 ? `${value}T00:00:00` : value);
+
+  // Calendar dates carry no time or zone — format the string directly rather
+  // than routing them through a Date and risking an off-by-one-day shift.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [year, month, day] = value.split('-');
+    const name = MONTHS[Number(month) - 1];
+    return name ? `${day} ${name} ${year}` : value;
+  }
+
+  const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
+
+  const parts = zonedParts(date);
+  const name = MONTHS[Number(parts.month) - 1];
+  return name ? `${parts.day} ${name} ${parts.year}` : value;
 }
 
 export function formatDateTime(value: string | null | undefined): string {
   if (!value) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+
+  const parts = zonedParts(date);
+  const name = MONTHS[Number(parts.month) - 1];
+  if (!name) return value;
+
+  return `${parts.day} ${name} ${parts.year}, ${parts.hour}:${parts.minute}`;
 }
 
 export function formatTime(value: string | null | undefined): string {
   if (!value) return '—';
   // Times arrive as HH:MM from the API's to_char formatting.
   if (/^\d{2}:\d{2}/.test(value)) return value.slice(0, 5);
+
   const date = new Date(value);
-  return Number.isNaN(date.getTime())
-    ? value
-    : date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  if (Number.isNaN(date.getTime())) return value;
+
+  const parts = zonedParts(date);
+  return `${parts.hour}:${parts.minute}`;
 }
 
 /** Turns SEAT_ALREADY_ALLOCATED / PARTIALLY_PAID into readable label text. */

@@ -66,6 +66,23 @@ const NAV_SECTIONS: Array<{ title: string; items: NavItem[] }> = [
   },
 ];
 
+/**
+ * Bottom tab bar for phones. Mirrors the five destinations staff reach for
+ * most often; everything else stays in the drawer behind "More", so the bar
+ * never needs to scroll.
+ */
+const BOTTOM_NAV: NavItem[] = [
+  { href: '/dashboard', label: 'Home', icon: '⌂' },
+  { href: '/students', label: 'Students', icon: '☺', permission: Permission.STUDENT_VIEW },
+  {
+    href: '/attendance',
+    label: 'Attendance',
+    icon: '✓',
+    permission: Permission.ATTENDANCE_MANAGE,
+  },
+  { href: '/fees', label: 'Fees', icon: '₹', permission: Permission.INVOICE_VIEW },
+];
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, can, isSuperAdmin } = useSession();
   const pathname = usePathname();
@@ -98,6 +115,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     router.replace('/login');
     router.refresh();
   }
+
+  const bottomItems = BOTTOM_NAV.filter(
+    (item) => !item.permission || can(item.permission),
+  );
 
   const visibleSections = NAV_SECTIONS.map((section) => ({
     ...section,
@@ -154,9 +175,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand text-sm font-bold text-white">
             M
           </span>
-          <span className="text-sm font-semibold tracking-tight text-content">
-            Manas Library
-          </span>
+          <span className="wordmark text-base text-brand">Manas Library</span>
         </div>
         {nav}
         <div className="border-t border-border p-3">
@@ -182,7 +201,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           />
           <aside className="relative flex h-full w-72 flex-col border-r border-border bg-surface">
             <div className="flex h-14 items-center justify-between border-b border-border px-4">
-              <span className="text-sm font-semibold text-content">Manas Library</span>
+              <span className="wordmark text-base text-brand">Manas Library</span>
               <Button
                 variant="ghost"
                 size="sm"
@@ -209,26 +228,78 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-surface/90 px-4 backdrop-blur lg:px-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="lg:hidden"
-            onClick={() => setMobileOpen(true)}
-            aria-label="Open navigation"
-          >
-            ☰
-          </Button>
+        {/* On phones the hamburger is dropped — "More" in the bottom bar opens
+            the same drawer — which leaves room for the branch selector. */}
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-surface/90 px-4 backdrop-blur sm:gap-3 lg:px-6">
           <BranchSwitcher />
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex min-w-0 items-center gap-2">
             <GlobalSearch />
           </div>
         </header>
 
-        <main className="flex-1 px-4 py-6 lg:px-6 lg:py-8">
+        {/* Bottom padding clears the fixed tab bar (plus the iOS home
+            indicator) so the last row of a list is never unreachable. */}
+        <main className="flex-1 px-4 py-5 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-5 lg:px-6 lg:py-8 lg:pb-8">
           <div className="mx-auto w-full max-w-[100rem]">{children}</div>
         </main>
       </div>
+
+      <nav
+        aria-label="Primary"
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+      >
+        <ul className="flex items-stretch">
+          {bottomItems.map((item) => {
+            const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+            return (
+              <li key={item.href} className="flex-1">
+                <Link
+                  href={item.href}
+                  aria-current={active ? 'page' : undefined}
+                  className="flex flex-col items-center gap-0.5 px-1 py-2"
+                >
+                  <span
+                    aria-hidden
+                    className={clsx(
+                      'flex h-7 w-12 items-center justify-center rounded-full text-base transition-colors',
+                      active ? 'bg-brand-subtle text-brand' : 'text-content-subtle',
+                    )}
+                  >
+                    {item.icon}
+                  </span>
+                  <span
+                    className={clsx(
+                      'text-[10px] leading-tight',
+                      active ? 'font-semibold text-brand' : 'text-content-muted',
+                    )}
+                  >
+                    {item.label}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+
+          <li className="flex-1">
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Open navigation"
+              aria-expanded={mobileOpen}
+              className="flex w-full flex-col items-center gap-0.5 px-1 py-2"
+            >
+              <span
+                aria-hidden
+                className="flex h-7 w-12 items-center justify-center rounded-full text-base text-content-subtle"
+              >
+                ⋯
+              </span>
+              <span className="text-[10px] leading-tight text-content-muted">More</span>
+            </button>
+          </li>
+        </ul>
+      </nav>
     </div>
   );
 }

@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { PaginationMeta, Payment } from '@manas/shared';
 import { getAccessToken } from '@/lib/supabase/server';
+import { IS_DEMO_MODE } from '@/lib/demo/config';
+import { resolveDemoRequest } from '@/lib/demo/resolver';
 import { Card, PageHeader, StatCard } from '@/components/ui/Card';
 import { DataTable } from '@/components/ui/DataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -25,6 +27,16 @@ const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000').rep
  * so it is fetched directly rather than through the generic helper.
  */
 async function fetchPayments(query: Record<string, string | undefined>) {
+  if (IS_DEMO_MODE) {
+    const resolved = resolveDemoRequest('/payments', query)!;
+    return {
+      data: resolved.data as PaymentRow[],
+      meta: resolved.meta,
+      totals: (resolved.totals ?? { collected: '0.00' }) as { collected: string },
+      error: null as string | null,
+    };
+  }
+
   const token = await getAccessToken();
   const url = new URL(`${API_URL}/api/v1/payments`);
 

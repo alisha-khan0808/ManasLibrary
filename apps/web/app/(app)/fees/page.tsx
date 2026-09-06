@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { PaginationMeta } from '@manas/shared';
 import { getAccessToken } from '@/lib/supabase/server';
+import { IS_DEMO_MODE } from '@/lib/demo/config';
+import { resolveDemoRequest } from '@/lib/demo/resolver';
 import { Card, PageHeader, StatCard } from '@/components/ui/Card';
 import { DataTable } from '@/components/ui/DataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -29,6 +31,19 @@ interface FeeRow {
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000').replace(/\/$/, '');
 
 async function fetchFees(query: Record<string, string | undefined>) {
+  if (IS_DEMO_MODE) {
+    const resolved = resolveDemoRequest('/fees', query)!;
+    return {
+      data: resolved.data as FeeRow[],
+      meta: resolved.meta,
+      totals: (resolved.totals ?? { outstanding: '0.00', overdue: '0.00' }) as {
+        outstanding: string;
+        overdue: string;
+      },
+      error: null as string | null,
+    };
+  }
+
   const token = await getAccessToken();
   const url = new URL(`${API_URL}/api/v1/fees`);
 

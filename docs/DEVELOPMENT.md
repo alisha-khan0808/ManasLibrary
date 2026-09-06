@@ -112,3 +112,46 @@ Worth knowing before this goes to production:
 - **Realtime subscriptions are not yet wired into the UI.** The database side
   (publication, RLS policies) is in place; the frontend still refreshes on
   navigation rather than subscribing.
+
+## Demo mode (UI preview without a backend)
+
+Demo mode renders the whole interface from static fixtures so the UI can be
+reviewed before Supabase and the database exist. Enable it in
+`apps/web/.env.local`:
+
+```
+NEXT_PUBLIC_DEMO_MODE=true
+```
+
+Then start the web app and click **Explore the demo** on the sign-in page.
+
+### What it does
+
+- `middleware.ts` skips the session check, so no route redirects to `/login`.
+- `lib/api.ts` and `lib/api-client.ts` short-circuit to
+  `lib/demo/resolver.ts` instead of calling the API.
+- Writes are refused with an explicit toast rather than faked, so the UI never
+  shows a success it cannot back up.
+- An amber banner sits above every screen.
+
+### What it does not do
+
+Demo mode exercises **no** authentication, branch isolation, business rules,
+transactions or persistence. It proves the interface renders. It proves
+nothing about the backend, and a screen working here is not evidence that the
+corresponding API route works.
+
+### It cannot reach production
+
+`assertDemoModeIsSafe()` runs in the root layout, which is evaluated during
+`next build`. If `NEXT_PUBLIC_DEMO_MODE=true` is set in a production build the
+build throws and fails.
+
+Note that `next build` loads `.env.local`, so **you cannot run a production
+build while demo mode is enabled there** — that is the guard working. Comment
+the flag out (or remove the file) before building for deployment.
+
+### Turning it off
+
+Remove the flag from `.env.local` and fill in real Supabase credentials. No
+other change is needed; the same pages then read from the live API.

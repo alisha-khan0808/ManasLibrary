@@ -2,6 +2,8 @@
 
 import type { ApiResponse, PaginationMeta } from '@manas/shared';
 import { getSupabaseBrowserClient } from './supabase/client';
+import { IS_DEMO_MODE } from './demo/config';
+import { resolveDemoRequest } from './demo/resolver';
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000').replace(/\/$/, '');
 
@@ -50,6 +52,28 @@ export async function request<T>(
     query?: Record<string, unknown>;
   } = {},
 ): Promise<ClientResult<T>> {
+  if (IS_DEMO_MODE) {
+    const method = options.method ?? 'GET';
+
+    // Writes are refused rather than faked. Returning a success the UI then
+    // fails to reflect would be more confusing than an explicit refusal.
+    if (method !== 'GET') {
+      throw new ApiClientError(
+        501,
+        'DEMO_MODE',
+        'Demo mode is read-only — this change was not saved. Connect Supabase to enable writes.',
+      );
+    }
+
+    const resolved = resolveDemoRequest(path, options.query ?? {});
+
+    if (!resolved) {
+      throw new ApiClientError(404, 'NOT_FOUND', `No demo fixture is defined for ${path}.`);
+    }
+
+    return { data: resolved.data as T, meta: resolved.meta, message: resolved.message };
+  }
+
   const url = new URL(`${API_URL}/api/v1${path.startsWith('/') ? path : `/${path}`}`);
 
   for (const [key, value] of Object.entries(options.query ?? {})) {
