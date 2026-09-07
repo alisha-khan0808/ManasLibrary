@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
+    "prebuild": "npm run build --workspace @manas/shared --prefix ../..",
     "build": "next build",
     "start": "next start -p ${PORT:-3000}",
     "lint": "next lint",
