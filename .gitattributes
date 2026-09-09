@@ -1,0 +1,3 @@
+# Migration checksums are computed over file bytes, so line endings must not
+# drift between a Windows checkout and a Linux deploy.
+*.sql text eol=lf

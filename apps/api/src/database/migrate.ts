@@ -21,7 +21,11 @@ interface AppliedMigration {
 
 function readMigrationFiles(): Array<{ name: string; sql: string; checksum: string }> {
   return readdirSync(MIGRATIONS_DIR)
-    .filter((file) => file.endsWith('.sql'))
+    // A leading underscore marks a file that is not itself a migration —
+    // the concatenated bundle generated for manual Supabase runs, for
+    // instance. Applying one would re-run every statement the numbered
+    // files already applied.
+    .filter((file) => file.endsWith('.sql') && !file.startsWith('_'))
     .sort()
     .map((name) => {
       const sql = readFileSync(path.join(MIGRATIONS_DIR, name), 'utf8');
