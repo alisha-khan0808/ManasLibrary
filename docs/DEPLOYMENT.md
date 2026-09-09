@@ -91,3 +91,69 @@ muddies the logs. Keep it on one instance.
 Supabase takes automatic daily backups. Verify the retention window matches
 what the franchise needs, and test a restore before go-live — an untested
 backup is not a backup.
+
+---
+
+# Netlify (single-origin deployment)
+
+Both halves of the application ship to one Netlify site: the Next.js console
+as the site itself, and the Express API as a single function behind an
+`/api/*` redirect. No second platform, and no CORS between them because the
+browser only ever talks to its own origin.
+
+`netlify.toml` describes the whole deploy. **Clear the Netlify UI's "Base
+directory", "Package directory", "Build command" and "Publish directory"** or
+the UI settings will override the file and the build will fail the way it did
+before this was added.
+
+## Environment variables
+
+Netlify → Site configuration → Environment variables.
+
+| Variable | Value | Exposed to the browser |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | your project URL | yes |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon key | yes |
+| `SUPABASE_URL` | same project URL | no |
+| `SUPABASE_SERVICE_ROLE_KEY` | service_role key | **no — never prefix this `NEXT_PUBLIC_`** |
+| `DATABASE_URL` | Supabase **transaction pooler**, port 6543 | no |
+| `DATABASE_POOL_MAX` | `2` | no |
+| `NODE_ENV` | `production` | no |
+| `JOBS_ENABLED` | `false` | no |
+
+Leave `NEXT_PUBLIC_API_URL` **unset**. Empty means "same origin", which is the
+whole point of this layout. Setting it to a localhost address is what produces
+the "Cannot reach the API" card on a deployed site.
+
+## Use the transaction pooler, not the session pooler
+
+Every concurrent function instance opens its own connection pool. Port 5432
+(session pooler) holds a connection per instance and will exhaust the
+project's connection limit under any real traffic. Port 6543 pools per
+transaction, which is what serverless needs.
+
+`DATABASE_POOL_MAX=2` for the same reason: the ceiling is instances × pool
+size, not pool size alone.
+
+## What does not run on Netlify
+
+The scheduler lives in `apps/api/src/index.ts`, which a function never
+executes. **Fee reminders and membership expiry do not run.** Everything
+else — every API route, every business rule — is the same code as the local
+server.
+
+To restore them, add a Netlify Scheduled Function that calls the job entry
+points, or trigger them externally on a cron. Until then, treat overdue fee
+detection as a manual step: the *Fees & reminders* screen has a button that
+runs the sweep on demand.
+
+## Verifying a deploy
+
+```
+curl https://<your-site>.netlify.app/health          # {"status":"ok"}
+curl https://<your-site>.netlify.app/api/v1/branches # 401 UNAUTHENTICATED
+```
+
+A 401 on the second is the correct answer — it proves the function is running
+and enforcing auth. A 404 means the redirect is not matching; a 502 means the
+function crashed, usually a missing `DATABASE_URL`.

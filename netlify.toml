@@ -1,0 +1,46 @@
+# Netlify deployment for the whole application: the Next.js console and the
+# Express API, on one origin.
+#
+# This file takes precedence over the build settings in the Netlify UI. Clear
+# the UI's "Base directory", "Package directory", "Build command" and
+# "Publish directory" so the deploy is described here and nowhere else.
+
+[build]
+  # The shared package compiles to dist/, which is gitignored, so it must be
+  # built before either app can resolve it. The API is built because the
+  # function imports its compiled output.
+  command = "npm run build -w @manas/shared && npm run build -w @manas/api && npm run build -w @manas/web"
+  publish = "apps/web/.next"
+  functions = "netlify/functions"
+
+[build.environment]
+  # Next 14.2 predates Node 24; pin to the LTS the project is tested on.
+  NODE_VERSION = "20"
+
+[functions]
+  node_bundler = "esbuild"
+
+# `pg` resolves an optional native driver at runtime that esbuild cannot
+# follow. Keeping it external ships the JS implementation, which is what we
+# actually use.
+[functions."api"]
+  external_node_modules = ["pg", "pg-native"]
+
+# Everything under /api is the Express app. `force = true` so it wins over
+# Next's own handling of unmatched paths.
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+# The API's health endpoint, reachable without the /api prefix so uptime
+# checks match the local server.
+[[redirects]]
+  from = "/health"
+  to = "/.netlify/functions/api/health"
+  status = 200
+  force = true
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

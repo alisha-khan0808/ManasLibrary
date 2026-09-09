@@ -3,7 +3,25 @@ import { getAccessToken } from './supabase/server';
 import { IS_DEMO_MODE } from './demo/config';
 import { resolveDemoRequest } from './demo/resolver';
 
-const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000').replace(/\/$/, '');
+/**
+ * Where the API lives, from this process's point of view.
+ *
+ * A Server Component's fetch runs in Node, so it needs an absolute URL even
+ * when the API is served from the same origin. On Netlify the API is a
+ * function on this very site, and Netlify injects the deploy's own URL —
+ * DEPLOY_PRIME_URL on branch and preview deploys, URL on production.
+ */
+function resolveApiBase(): string {
+  const explicit = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (explicit) return explicit.replace(/\/$/, '');
+
+  const site = process.env.DEPLOY_PRIME_URL ?? process.env.URL;
+  if (site) return site.replace(/\/$/, '');
+
+  return 'http://localhost:4000';
+}
+
+const API_URL = resolveApiBase();
 
 export class ApiRequestError extends Error {
   constructor(

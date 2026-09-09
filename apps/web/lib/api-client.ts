@@ -5,7 +5,13 @@ import { getSupabaseBrowserClient } from './supabase/client';
 import { IS_DEMO_MODE } from './demo/config';
 import { resolveDemoRequest } from './demo/resolver';
 
-const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000').replace(/\/$/, '');
+/**
+ * Empty means "same origin as this page", which is how the app is deployed on
+ * Netlify: the API is a function behind an /api/* redirect on this very site.
+ * A value is only needed when the API runs somewhere else, as it does in
+ * local development on port 4000.
+ */
+const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? '').trim().replace(/\/$/, '');
 
 export class ApiClientError extends Error {
   constructor(
@@ -74,7 +80,11 @@ export async function request<T>(
     return { data: resolved.data as T, meta: resolved.meta, message: resolved.message };
   }
 
-  const url = new URL(`${API_URL}/api/v1${path.startsWith('/') ? path : `/${path}`}`);
+  const url = new URL(
+    `${API_URL}/api/v1${path.startsWith('/') ? path : `/${path}`}`,
+    // Base is only consulted when API_URL is empty, i.e. same-origin.
+    typeof window === 'undefined' ? 'http://localhost' : window.location.origin,
+  );
 
   for (const [key, value] of Object.entries(options.query ?? {})) {
     if (value === undefined || value === null || value === '') continue;
