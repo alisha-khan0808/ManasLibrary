@@ -3,17 +3,18 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import type { SeatAllocation, Student } from '@manas/shared';
+import { Permission, type SeatAllocation, type Student } from '@manas/shared';
 import type { SeatWithOccupant } from './page';
 import { api, ApiClientError } from '@/lib/api-client';
 import { useToast } from '@/components/ui/Toast';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
+import { useSession } from '@/components/SessionProvider';
 import { InputField, SelectField } from '@/components/ui/Field';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { addDaysIso, formatDate, todayIso } from '@/lib/format';
 
-type Mode = 'overview' | 'allocate' | 'transfer' | 'release';
+type Mode = 'overview' | 'allocate' | 'transfer' | 'release' | 'maintenance' | 'restore';
 
 export function SeatActionDialog({
   seat,
@@ -24,6 +25,9 @@ export function SeatActionDialog({
 }) {
   const router = useRouter();
   const toast = useToast();
+
+  const { can } = useSession();
+  const canManageSeats = can(Permission.SEAT_MANAGE);
 
   const [mode, setMode] = useState<Mode>('overview');
   const [loading, setLoading] = useState(false);
@@ -111,11 +115,20 @@ export function SeatActionDialog({
       }),
     );
 
+  // Taking a seat out of service is a status change, not an allocation event,
+  // so it goes through the seat resource rather than /seat-allocations. The
+  // API refuses it while an allocation is active, which is why the button is
+  // only offered for an unoccupied seat.
+  const setStatus = (status: 'MAINTENANCE' | 'AVAILABLE') =>
+    run(() => api.patch(`/seats/${seat.id}`, { status }));
+
   const title = {
     overview: `Seat ${seat.seat_number}`,
     allocate: `Allocate seat ${seat.seat_number}`,
     transfer: `Transfer from seat ${seat.seat_number}`,
     release: `Release seat ${seat.seat_number}`,
+    maintenance: `Put seat ${seat.seat_number} under maintenance`,
+    restore: `Return seat ${seat.seat_number} to service`,
   }[mode];
 
   return (
@@ -136,10 +149,18 @@ export function SeatActionDialog({
             </Button>
             <Button
               onClick={
-                mode === 'allocate' ? allocate : mode === 'transfer' ? transfer : release
+                mode === 'allocate'
+                  ? allocate
+                  : mode === 'transfer'
+                    ? transfer
+                    : mode === 'maintenance'
+                      ? () => setStatus('MAINTENANCE')
+                      : mode === 'restore'
+                        ? () => setStatus('AVAILABLE')
+                        : release
               }
               loading={loading}
-              variant={mode === 'release' ? 'danger' : 'primary'}
+              variant={mode === 'release' || mode === 'maintenance' ? 'danger' : 'primary'}
               disabled={
                 (mode === 'allocate' && !studentId) ||
                 (mode === 'transfer' && !targetSeatId)
@@ -149,7 +170,11 @@ export function SeatActionDialog({
                 ? 'Allocate'
                 : mode === 'transfer'
                   ? 'Transfer'
-                  : 'Release seat'}
+                  : mode === 'maintenance'
+                    ? 'Put under maintenance'
+                    : mode === 'restore'
+                      ? 'Return to service'
+                      : 'Release seat'}
             </Button>
           </>
         )
@@ -162,6 +187,21 @@ export function SeatActionDialog({
         >
           {error}
         </div>
+      )}
+
+      {mode === 'maintenance' && (
+        <p className="text-sm text-content-muted">
+          Seat <span className="font-medium text-content">{seat.seat_number}</span> will be
+          taken out of service and cannot be allocated until it is returned. Existing
+          allocation history is kept.
+        </p>
+      )}
+
+      {mode === 'restore' && (
+        <p className="text-sm text-content-muted">
+          Seat <span className="font-medium text-content">{seat.seat_number}</span> will become
+          available for allocation again.
+        </p>
       )}
 
       {mode === 'overview' && (
@@ -218,12 +258,34 @@ export function SeatActionDialog({
                 </Button>
               </>
             )}
-            {(seat.status === 'MAINTENANCE' || seat.status === 'INACTIVE') && (
-              <p className="text-sm text-content-muted">
-                This seat is {seat.status.toLowerCase()} and cannot be allocated. Change its
-                status first.
+            {/* Taking a seat out of service is seat configuration rather than
+                a day-to-day allocation, so it needs SEAT_MANAGE — the same
+                permission the API enforces on PATCH /seats/:id. */}
+            {canManageSeats && !seat.allocation_id && seat.status !== 'MAINTENANCE' && (
+              <Button size="sm" variant="secondary" onClick={() => setMode('maintenance')}>
+                Mark under maintenance
+              </Button>
+            )}
+
+            {canManageSeats && seat.status === 'MAINTENANCE' && (
+              <Button size="sm" onClick={() => setMode('restore')}>
+                Return to service
+              </Button>
+            )}
+
+            {seat.allocation_id && (seat.status !== 'MAINTENANCE') && canManageSeats && (
+              <p className="w-full text-xs text-content-muted">
+                Release this seat before putting it under maintenance.
               </p>
             )}
+
+            {!canManageSeats &&
+              (seat.status === 'MAINTENANCE' || seat.status === 'INACTIVE') && (
+                <p className="text-sm text-content-muted">
+                  This seat is {seat.status.toLowerCase()} and cannot be allocated. A branch
+                  admin can change its status.
+                </p>
+              )}
           </div>
         </div>
       )}

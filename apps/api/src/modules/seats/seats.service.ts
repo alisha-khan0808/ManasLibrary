@@ -260,14 +260,34 @@ export async function updateSeat(
 
   if (assignments.length === 0) return existing;
 
-  const seat = await queryOne<Seat>(
-    `UPDATE public.seats SET ${assignments.join(', ')}
-      WHERE id = $${index}
-      RETURNING ${SEAT_COLUMNS}`,
-    [...values, seatId],
-  );
+  return withTransaction(async (tx) => {
+    const seat = await tx.queryOne<Seat>(
+      `UPDATE public.seats SET ${assignments.join(', ')}
+        WHERE id = $${index}
+        RETURNING ${SEAT_COLUMNS}`,
+      [...values, seatId],
+    );
 
-  return seat!;
+    // Taking a seat out of service removes capacity, so who did it and when
+    // is worth being able to answer later. Only status transitions are
+    // logged; renaming a seat is not an operational event.
+    if (input.status !== undefined && input.status !== existing.status) {
+      await recordAudit(tx, {
+        branchId: seat!.branch_id,
+        userId: auth.userId,
+        action: AuditAction.SEAT_STATUS_CHANGED,
+        entityType: 'seat',
+        entityId: seat!.id,
+        metadata: {
+          seat_number: seat!.seat_number,
+          from: existing.status,
+          to: seat!.status,
+        },
+      });
+    }
+
+    return seat!;
+  });
 }
 
 /* --------------------------------------------------------------------------
