@@ -96,10 +96,16 @@ export async function apiFetch<T>(
   try {
     body = await response.json();
   } catch {
+    // A non-JSON body almost always means the request never reached the API:
+    // a crashed function, an unmatched redirect serving an HTML 404, or a
+    // proxy error page. Carry the status and content type so the cause is
+    // visible instead of hiding behind "unexpected response".
+    const contentType = response.headers.get('content-type') ?? 'unknown type';
     throw new ApiRequestError(
       response.status,
       'INVALID_RESPONSE',
-      'The server returned an unexpected response.',
+      `The API returned ${contentType} with HTTP ${response.status} instead of JSON. ` +
+        'The API is likely not running or not reachable at this URL.',
     );
   }
 

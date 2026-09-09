@@ -109,10 +109,11 @@ export async function request<T>(
   try {
     body = await response.json();
   } catch {
+    const contentType = response.headers.get('content-type') ?? 'unknown type';
     throw new ApiClientError(
       response.status,
       'INVALID_RESPONSE',
-      'The server returned an unexpected response.',
+      `The API returned ${contentType} with HTTP ${response.status} instead of JSON.`,
     );
   }
 
