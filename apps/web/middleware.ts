@@ -30,6 +30,7 @@ function isApiPath(pathname: string): boolean {
   return (
     pathname.startsWith('/api/') ||
     pathname === '/health' ||
+    pathname.startsWith('/health/') ||
     pathname.startsWith('/.netlify/')
   );
 }
@@ -102,6 +103,6 @@ export const config = {
     // Everything except the API, the health endpoint, Netlify's own function
     // paths, and static assets. The API shares this origin in production, so
     // excluding it here is what keeps it an API rather than a redirect.
-    '/((?!api/|health$|\\.netlify/|_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!api/|health(?:$|/)|\\.netlify/|_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
