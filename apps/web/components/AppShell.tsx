@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { Permission } from '@manas/shared';
+import { Icon, type IconName } from './ui/Icon';
+import type { Accent } from './ui/Card';
 import { useSession } from './SessionProvider';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { initials } from '@/lib/format';
@@ -15,7 +17,9 @@ import { BranchSwitcher } from './BranchSwitcher';
 interface NavItem {
   href: string;
   label: string;
-  icon: string;
+  icon: IconName;
+  /** Colour identity, so a destination reads the same in the nav and on its page. */
+  accent: Accent;
   permission?: Permission;
   superAdminOnly?: boolean;
 }
@@ -24,26 +28,28 @@ const NAV_SECTIONS: Array<{ title: string; items: NavItem[] }> = [
   {
     title: 'Overview',
     items: [
-      { href: '/dashboard', label: 'Dashboard', icon: '◧' },
-      { href: '/branches', label: 'Branches', icon: '⌂', superAdminOnly: true },
+      { href: '/dashboard', label: 'Dashboard', icon: 'dashboard', accent: 'blue' },
+      { href: '/branches', label: 'Branches', icon: 'branch', accent: 'purple', superAdminOnly: true },
     ],
   },
   {
     title: 'Operations',
     items: [
-      { href: '/students', label: 'Students', icon: '☺', permission: Permission.STUDENT_VIEW },
+      { href: '/students', label: 'Students', icon: 'students', accent: 'blue', permission: Permission.STUDENT_VIEW },
       {
         href: '/admissions',
         label: 'Admissions',
-        icon: '✎',
+        icon: 'admissions',
+        accent: 'teal',
         permission: Permission.ADMISSION_MANAGE,
       },
-      { href: '/seats', label: 'Seats', icon: '▦', permission: Permission.SEAT_ALLOCATE },
-      { href: '/batches', label: 'Batches', icon: '◷', permission: Permission.BATCH_MANAGE },
+      { href: '/seats', label: 'Seats', icon: 'seat', accent: 'green', permission: Permission.SEAT_ALLOCATE },
+      { href: '/batches', label: 'Batches', icon: 'batch', accent: 'purple', permission: Permission.BATCH_MANAGE },
       {
         href: '/attendance',
         label: 'Attendance',
-        icon: '✓',
+        icon: 'attendance',
+        accent: 'amber',
         permission: Permission.ATTENDANCE_MANAGE,
       },
     ],
@@ -51,17 +57,17 @@ const NAV_SECTIONS: Array<{ title: string; items: NavItem[] }> = [
   {
     title: 'Finance',
     items: [
-      { href: '/invoices', label: 'Invoices', icon: '≣', permission: Permission.INVOICE_VIEW },
-      { href: '/payments', label: 'Payments', icon: '₹', permission: Permission.INVOICE_VIEW },
-      { href: '/fees', label: 'Fees & reminders', icon: '⏰', permission: Permission.INVOICE_VIEW },
+      { href: '/invoices', label: 'Invoices', icon: 'invoice', accent: 'blue', permission: Permission.INVOICE_VIEW },
+      { href: '/payments', label: 'Payments', icon: 'payment', accent: 'green', permission: Permission.INVOICE_VIEW },
+      { href: '/fees', label: 'Fees & reminders', icon: 'bell', accent: 'rose', permission: Permission.INVOICE_VIEW },
     ],
   },
   {
     title: 'Administration',
     items: [
-      { href: '/reports', label: 'Reports', icon: '▤', permission: Permission.REPORT_VIEW },
-      { href: '/users', label: 'Users', icon: '⚇', permission: Permission.USER_MANAGE },
-      { href: '/settings', label: 'Settings', icon: '⚙' },
+      { href: '/reports', label: 'Reports', icon: 'report', accent: 'teal', permission: Permission.REPORT_VIEW },
+      { href: '/users', label: 'Users', icon: 'users', accent: 'purple', permission: Permission.USER_MANAGE },
+      { href: '/settings', label: 'Settings', icon: 'settings', accent: 'blue' },
     ],
   },
 ];
@@ -72,15 +78,16 @@ const NAV_SECTIONS: Array<{ title: string; items: NavItem[] }> = [
  * never needs to scroll.
  */
 const BOTTOM_NAV: NavItem[] = [
-  { href: '/dashboard', label: 'Home', icon: '⌂' },
-  { href: '/students', label: 'Students', icon: '☺', permission: Permission.STUDENT_VIEW },
+  { href: '/dashboard', label: 'Home', icon: 'dashboard', accent: 'blue' },
+  { href: '/students', label: 'Students', icon: 'students', accent: 'blue', permission: Permission.STUDENT_VIEW },
   {
     href: '/attendance',
     label: 'Attendance',
-    icon: '✓',
+    icon: 'attendance',
+        accent: 'amber',
     permission: Permission.ATTENDANCE_MANAGE,
   },
-  { href: '/fees', label: 'Fees', icon: '₹', permission: Permission.INVOICE_VIEW },
+  { href: '/fees', label: 'Fees', icon: 'rupee', accent: 'rose', permission: Permission.INVOICE_VIEW },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -147,14 +154,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     href={item.href}
                     aria-current={active ? 'page' : undefined}
                     className={clsx(
-                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
+                      `accent-${item.accent}`,
+                      'flex items-center gap-3 rounded-xl px-2.5 py-2 text-sm transition-colors',
                       active
-                        ? 'bg-brand-subtle font-medium text-brand'
+                        ? 'bg-accent-soft font-semibold text-content'
                         : 'text-content-muted hover:bg-surface-sunken hover:text-content',
                     )}
                   >
-                    <span aria-hidden className="w-4 text-center opacity-70">
-                      {item.icon}
+                    {/* The icon keeps its colour whether or not the row is
+                        active, so each destination stays recognisable. */}
+                    <span
+                      className={clsx(
+                        'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors',
+                        active ? 'bg-accent-chip text-accent' : 'text-accent',
+                      )}
+                    >
+                      <Icon name={item.icon} className="h-[18px] w-[18px]" />
                     </span>
                     {item.label}
                   </Link>
@@ -260,18 +275,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   className="flex flex-col items-center gap-0.5 px-1 py-2"
                 >
                   <span
-                    aria-hidden
                     className={clsx(
-                      'flex h-7 w-12 items-center justify-center rounded-full text-base transition-colors',
-                      active ? 'bg-brand-subtle text-brand' : 'text-content-subtle',
+                      `accent-${item.accent}`,
+                      'flex h-7 w-12 items-center justify-center rounded-full transition-colors',
+                      active ? 'bg-accent-chip text-accent' : 'text-content-subtle',
                     )}
                   >
-                    {item.icon}
+                    <Icon name={item.icon} className="h-[18px] w-[18px]" />
                   </span>
                   <span
                     className={clsx(
                       'text-[10px] leading-tight',
-                      active ? 'font-semibold text-brand' : 'text-content-muted',
+                      active ? 'font-semibold text-content' : 'text-content-muted',
                     )}
                   >
                     {item.label}
@@ -293,7 +308,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 aria-hidden
                 className="flex h-7 w-12 items-center justify-center rounded-full text-base text-content-subtle"
               >
-                ⋯
+                &#8943;
               </span>
               <span className="text-[10px] leading-tight text-content-muted">More</span>
             </button>

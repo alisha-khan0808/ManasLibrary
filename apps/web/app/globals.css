@@ -57,6 +57,30 @@
     --info-subtle: 22 36 60;
   }
 
+  /* ------------------------------------------------------------------
+     Accents.
+
+     Each metric on a dashboard carries its own colour identity, so a
+     reader learns "green is money in, red is money overdue" and can scan
+     by hue. A class sets three variables and every component that uses
+     them — tinted surface, icon badge, emphasised value — follows,
+     including in dark mode. Adding a seventh accent means adding one
+     block here and nothing else.
+     ------------------------------------------------------------------ */
+  .accent-blue   { --accent-fg: 37 99 235;  --accent-soft: 239 245 255; --accent-chip: 219 232 254; }
+  .accent-green  { --accent-fg: 15 138 88;  --accent-soft: 236 251 243; --accent-chip: 209 245 227; }
+  .accent-amber  { --accent-fg: 180 116 14; --accent-soft: 255 247 232; --accent-chip: 253 236 200; }
+  .accent-purple { --accent-fg: 124 58 237; --accent-soft: 246 241 255; --accent-chip: 232 222 255; }
+  .accent-rose   { --accent-fg: 211 58 72;  --accent-soft: 255 241 242; --accent-chip: 255 221 224; }
+  .accent-teal   { --accent-fg: 13 140 140; --accent-soft: 235 248 248; --accent-chip: 205 239 239; }
+
+  .dark .accent-blue   { --accent-fg: 138 172 255; --accent-soft: 25 33 56;  --accent-chip: 34 47 82; }
+  .dark .accent-green  { --accent-fg: 109 205 156; --accent-soft: 18 38 30;  --accent-chip: 24 55 42; }
+  .dark .accent-amber  { --accent-fg: 232 179 90;  --accent-soft: 42 34 20;  --accent-chip: 60 47 26; }
+  .dark .accent-purple { --accent-fg: 182 148 255; --accent-soft: 33 27 52;  --accent-chip: 47 37 76; }
+  .dark .accent-rose   { --accent-fg: 248 145 155; --accent-soft: 46 26 30;  --accent-chip: 66 34 39; }
+  .dark .accent-teal   { --accent-fg: 106 206 206; --accent-soft: 17 40 42;  --accent-chip: 23 57 59; }
+
   * {
     border-color: rgb(var(--border));
   }

@@ -105,11 +105,13 @@ export default async function PaymentsPage({
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard
           label="Collected in this view"
+          accent="green"
+          icon="rupee"
           value={formatMoney(result.totals.collected)}
           tone="positive"
           hint="Net of reversals"
         />
-        <StatCard label="Transactions" value={meta.total} />
+        <StatCard label="Transactions" value={meta.total} accent="blue" icon="payment" />
         <StatCard
           label="Range"
           value={

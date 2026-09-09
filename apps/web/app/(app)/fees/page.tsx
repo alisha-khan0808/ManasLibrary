@@ -115,15 +115,19 @@ export default async function FeesPage({
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard
           label="Outstanding in view"
+          accent="amber"
+          icon="clock"
           value={formatMoney(result.totals.outstanding)}
           tone="warning"
         />
         <StatCard
           label="Overdue in view"
+          accent="rose"
+          icon="alert"
           value={formatMoney(result.totals.overdue)}
           tone="danger"
         />
-        <StatCard label="Fee records" value={meta.total} />
+        <StatCard label="Fee records" value={meta.total} accent="blue" icon="invoice" />
       </div>
 
       <div className="mt-6">

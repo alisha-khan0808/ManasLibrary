@@ -50,15 +50,17 @@ export default async function BranchDetailPage({ params }: { params: { id: strin
 
       {stats.data && (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Active students" value={stats.data.active_students} />
+          <StatCard label="Active students" value={stats.data.active_students} accent="blue" icon="students" />
           <StatCard
             label="Seats"
+            accent="green"
+            icon="seat"
             value={stats.data.total_seats}
             hint={`${stats.data.occupied_seats} occupied · ${stats.data.available_seats} free`}
             tone="brand"
           />
-          <StatCard label="Active batches" value={stats.data.active_batches} />
-          <StatCard label="Assigned staff" value={stats.data.staff_count} />
+          <StatCard label="Active batches" value={stats.data.active_batches} accent="purple" icon="batch" />
+          <StatCard label="Assigned staff" value={stats.data.staff_count} accent="teal" icon="users" />
         </div>
       )}
 

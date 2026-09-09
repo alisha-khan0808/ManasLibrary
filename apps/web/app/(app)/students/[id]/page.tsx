@@ -69,6 +69,7 @@ export default async function StudentProfilePage({ params }: { params: { id: str
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Outstanding"
+          icon="clock"
           value={formatMoney(feeSummary.outstanding)}
           tone={Number(feeSummary.outstanding) > 0 ? 'warning' : 'positive'}
           hint={
@@ -77,14 +78,17 @@ export default async function StudentProfilePage({ params }: { params: { id: str
               : 'Nothing due'
           }
         />
-        <StatCard label="Total paid" value={formatMoney(feeSummary.totalPaid)} tone="positive" />
+        <StatCard label="Total paid" value={formatMoney(feeSummary.totalPaid)} tone="positive" icon="rupee" />
         <StatCard
           label="Overdue invoices"
+          icon="alert"
           value={feeSummary.overdueCount}
           tone={feeSummary.overdueCount > 0 ? 'danger' : 'neutral'}
         />
         <StatCard
           label="Membership ends"
+          accent="purple"
+          icon="renew"
           value={currentAdmission ? formatDate(currentAdmission.end_date) : '—'}
           hint={membershipPlan?.name ?? 'No active membership'}
         />

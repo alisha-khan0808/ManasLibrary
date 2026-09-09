@@ -40,14 +40,16 @@ export default async function AttendancePage({
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Active students" value={roster.data.length} />
+        <StatCard label="Active students" value={roster.data.length} accent="blue" icon="students" />
         <StatCard
           label="Present"
+          accent="green"
+          icon="attendance"
           value={present}
           tone="positive"
           hint={`${roster.data.length - present} not yet marked`}
         />
-        <StatCard label="From biometric" value={biometric} hint="Synced from a device" />
+        <StatCard label="From biometric" value={biometric} accent="teal" icon="check" hint="Synced from a device" />
       </div>
 
       <div className="mt-6">

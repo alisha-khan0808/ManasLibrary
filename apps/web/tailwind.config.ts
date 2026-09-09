@@ -6,6 +6,9 @@ const config: Config = {
     './components/**/*.{ts,tsx}',
     './features/**/*.{ts,tsx}',
   ],
+  // accent-* class names are composed at runtime (`accent-${resolved}`), so
+  // Tailwind's scanner cannot see them in the source.
+  safelist: ['accent-blue', 'accent-green', 'accent-amber', 'accent-purple', 'accent-rose', 'accent-teal'],
   theme: {
     extend: {
       colors: {
@@ -28,6 +31,11 @@ const config: Config = {
         'danger-subtle': 'rgb(var(--danger-subtle) / <alpha-value>)',
         info: 'rgb(var(--info) / <alpha-value>)',
         'info-subtle': 'rgb(var(--info-subtle) / <alpha-value>)',
+        // Set by the .accent-* classes in globals.css, so one component can
+        // render in any accent without a class lookup table.
+        accent: 'rgb(var(--accent-fg) / <alpha-value>)',
+        'accent-soft': 'rgb(var(--accent-soft) / <alpha-value>)',
+        'accent-chip': 'rgb(var(--accent-chip) / <alpha-value>)',
       },
       fontFamily: {
         sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
