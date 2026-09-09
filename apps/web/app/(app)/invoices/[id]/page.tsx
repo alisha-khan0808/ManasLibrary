@@ -40,6 +40,14 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
         action={
           <>
             <StatusBadge status={invoice.status} />
+            {/* auto=1 opens the print dialog on arrival, so this is one click
+                from the invoice to a printed page or a PDF. */}
+            <Link
+              href={`/invoices/${invoice.id}/print?auto=1`}
+              className="inline-flex h-9 items-center rounded-lg border border-border bg-surface px-3 text-sm font-medium text-content transition-colors hover:bg-surface-sunken"
+            >
+              Print
+            </Link>
             <InvoiceActions invoice={invoice} />
           </>
         }

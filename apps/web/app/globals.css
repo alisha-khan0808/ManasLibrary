@@ -142,3 +142,57 @@
     }
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Print.
+
+   A printed invoice is a document, not a screenshot of an admin console, so
+   the app chrome is removed, colours are forced to something that survives a
+   monochrome printer, and the page is allowed to use the full sheet.
+   Anything the reader cannot act on from paper is marked `.no-print`.
+   -------------------------------------------------------------------------- */
+@media print {
+  .no-print,
+  .no-print * {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  /* Undo the app shell's sidebar offset and viewport constraints so the
+     document starts at the top-left of the sheet. */
+  .print-root {
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+  }
+
+  /* Backgrounds are off by default in most browsers; ask for them so table
+     headers and the totals band stay legible. */
+  .print-keep-color {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Never split a row or a totals block across two sheets. */
+  tr,
+  .print-avoid-break {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  a[href]::after {
+    content: '';
+  }
+}
+
+@page {
+  size: A4;
+  margin: 14mm;
+}

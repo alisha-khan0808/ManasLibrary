@@ -185,7 +185,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       {/* Desktop sidebar */}
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-surface lg:flex">
+      <aside className="no-print sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-surface lg:flex">
         <div className="flex h-14 items-center gap-2.5 border-b border-border px-5">
           <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand text-sm font-bold text-white">
             M
@@ -245,7 +245,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         {/* On phones the hamburger is dropped — "More" in the bottom bar opens
             the same drawer — which leaves room for the branch selector. */}
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-surface/90 px-4 backdrop-blur sm:gap-3 lg:px-6">
+        <header className="no-print sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-surface/90 px-4 backdrop-blur sm:gap-3 lg:px-6">
           <BranchSwitcher />
           <div className="ml-auto flex min-w-0 items-center gap-2">
             <GlobalSearch />
@@ -254,14 +254,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Bottom padding clears the fixed tab bar (plus the iOS home
             indicator) so the last row of a list is never unreachable. */}
-        <main className="flex-1 px-4 py-5 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-5 lg:px-6 lg:py-8 lg:pb-8">
-          <div className="mx-auto w-full max-w-[100rem]">{children}</div>
+        <main className="print-root flex-1 px-4 py-5 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-5 lg:px-6 lg:py-8 lg:pb-8">
+          <div className="print-root mx-auto w-full max-w-[100rem]">{children}</div>
         </main>
       </div>
 
       <nav
         aria-label="Primary"
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+        className="no-print fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
       >
         <ul className="flex items-stretch">
           {bottomItems.map((item) => {

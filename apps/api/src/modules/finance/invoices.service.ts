@@ -295,7 +295,9 @@ export async function getInvoice(auth: AuthContext, invoiceId: string) {
       [invoiceId],
     ),
     queryOne(
-      `SELECT id, full_name, student_code::text AS student_code, mobile, email::text AS email
+      // address is included for the printable invoice's billing block.
+      `SELECT id, full_name, student_code::text AS student_code, mobile,
+              email::text AS email, address
          FROM public.students WHERE id = $1`,
       [invoice.student_id],
     ),
