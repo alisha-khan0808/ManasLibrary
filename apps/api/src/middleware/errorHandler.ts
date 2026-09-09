@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { ErrorCode, type ApiError } from '@manas/shared';
 import { AppError, translateDatabaseError } from '../utils/errors';
 import { logger } from '../utils/logger';
-import { isProduction } from '../config/env';
+import { isDevelopment } from '../config/env';
 
 export function notFoundHandler(req: Request, res: Response): void {
   const body: ApiError = {
@@ -71,9 +71,13 @@ export function errorHandler(
     success: false,
     error: {
       code: ErrorCode.INTERNAL_ERROR,
-      message: isProduction
-        ? 'Something went wrong. Please try again.'
-        : `Unhandled error: ${error instanceof Error ? error.message : String(error)}`,
+      // Fails closed. Internal error text is only ever exposed when NODE_ENV
+      // explicitly says "development" — an unset or unexpected value gets the
+      // sanitised message, because a deployment that forgot to set NODE_ENV
+      // should not start leaking stack detail to the browser.
+      message: isDevelopment
+        ? `Unhandled error: ${error instanceof Error ? error.message : String(error)}`
+        : 'Something went wrong. Please try again.',
     },
   };
 

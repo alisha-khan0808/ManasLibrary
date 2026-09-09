@@ -8,6 +8,7 @@ import { logger } from './utils/logger';
 import { checkConnection } from './database/pool';
 import { requireAuth } from './middleware/auth';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { forbidden } from './utils/errors';
 import { apiRateLimiter, requestContext } from './middleware/requestContext';
 
 import { authRouter } from './modules/auth/auth.routes';
@@ -45,19 +46,42 @@ export function createApp(): Express {
   );
 
   app.use(
-    cors({
-      origin(origin, callback) {
-        // Same-origin and server-to-server calls arrive without an Origin.
-        if (!origin || env.CORS_ORIGINS.includes(origin)) {
-          callback(null, true);
-          return;
-        }
-        callback(new Error('Origin not allowed by CORS policy'));
-      },
-      credentials: true,
-      methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id'],
-      maxAge: 86_400,
+    cors((req, callback) => {
+      const origin = req.headers.origin;
+
+      const shared = {
+        credentials: true,
+        methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id'],
+        maxAge: 86_400,
+      };
+
+      // Server-to-server calls carry no Origin at all.
+      if (!origin) {
+        callback(null, { ...shared, origin: true });
+        return;
+      }
+
+      // A browser sends Origin on every non-GET request, including one to
+      // its own site. When the API is deployed behind the same domain as the
+      // frontend — as it is on Netlify — those requests are same-origin and
+      // must be allowed without appearing in the allowlist, or the API
+      // rejects its own console the moment it tries to write anything.
+      let sameOrigin = false;
+      try {
+        sameOrigin = new URL(origin).host === req.headers.host;
+      } catch {
+        // A malformed Origin is treated as cross-origin and falls through.
+      }
+
+      if (sameOrigin || env.CORS_ORIGINS.includes(origin)) {
+        callback(null, { ...shared, origin });
+        return;
+      }
+
+      // A rejected origin is the caller's fault, not a server fault: raising
+      // a plain Error here surfaced as a 500 INTERNAL_ERROR.
+      callback(forbidden('Origin not allowed by CORS policy.'));
     }),
   );
 

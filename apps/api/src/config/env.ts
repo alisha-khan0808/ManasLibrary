@@ -83,4 +83,6 @@ function load(): Env {
 export const env = load();
 
 export const isProduction = env.NODE_ENV === 'production';
+/** Only true when NODE_ENV explicitly says development — never by default. */
+export const isDevelopment = env.NODE_ENV === 'development';
 export const isTest = env.NODE_ENV === 'test';
