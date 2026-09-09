@@ -167,9 +167,37 @@ export function translateDatabaseError(error: unknown): AppError | null {
         'The payment amount exceeds the outstanding balance on this invoice.',
       );
     }
+    if (constraint === 'invoices_due_after_issue') {
+      return badRequest(
+        ErrorCode.VALIDATION_ERROR,
+        'The invoice due date cannot fall before its issue date.',
+      );
+    }
+    if (constraint === 'invoices_discount_within_subtotal') {
+      return badRequest(
+        ErrorCode.VALIDATION_ERROR,
+        'The discount cannot be greater than the invoice subtotal.',
+      );
+    }
+    if (constraint === 'students_mobile_format') {
+      return badRequest(
+        ErrorCode.VALIDATION_ERROR,
+        'The mobile number must be 10–15 digits with no spaces or symbols.',
+      );
+    }
+    if (constraint === 'batches_time_order') {
+      return badRequest(
+        ErrorCode.VALIDATION_ERROR,
+        'The batch end time must be later than its start time.',
+      );
+    }
+    // Naming the constraint keeps an unmapped rule diagnosable instead of
+    // surfacing as an anonymous "something was invalid".
     return badRequest(
       ErrorCode.VALIDATION_ERROR,
-      'The submitted values violate a business rule.',
+      constraint
+        ? `The submitted values violate the "${constraint}" rule.`
+        : 'The submitted values violate a business rule.',
     );
   }
 

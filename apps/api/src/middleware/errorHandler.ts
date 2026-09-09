@@ -31,12 +31,19 @@ export function errorHandler(
     if (appError.statusCode >= 500) {
       logger.error({ err: error, requestId: req.requestId }, 'Request failed');
     } else {
+      // A translated database error carries the constraint or trigger message
+      // that explains *why* the rule fired. The client only ever sees the
+      // sanitised text, so drop the original into the log or a 400 becomes
+      // undiagnosable.
+      const fromDatabase = !(error instanceof AppError);
+
       logger.warn(
         {
           requestId: req.requestId,
           code: appError.code,
           userId: req.auth?.userId,
           path: req.path,
+          ...(fromDatabase ? { err: error } : {}),
         },
         'Request rejected',
       );

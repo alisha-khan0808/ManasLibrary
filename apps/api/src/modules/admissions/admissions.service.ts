@@ -167,12 +167,20 @@ export async function createAdmission(
       ],
     );
 
+    const invoiceDate = input.admission_date ?? today();
+
+    // The fee is due when the membership starts — but an admission can be
+    // backdated (recording one that began earlier in the month), and an
+    // invoice may not fall due before it was issued. Fall back to the issue
+    // date in that case rather than failing the whole admission.
+    const defaultDueDate = startDate > invoiceDate ? startDate : invoiceDate;
+
     const invoice = await createInvoiceInTransaction(tx, auth, {
       branchId,
       studentId: student.id,
       admissionId: admission!.id,
-      invoiceDate: input.admission_date ?? today(),
-      dueDate: input.due_date ?? startDate,
+      invoiceDate,
+      dueDate: input.due_date ?? defaultDueDate,
       discount,
       tax: '0.00',
       notes: `Admission ${admission!.admission_number} — ${plan.name}`,
