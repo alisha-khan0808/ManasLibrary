@@ -14,7 +14,31 @@ const PUBLIC_PATHS = ['/login', '/forgot-password', '/reset-password', '/auth'];
 const IS_DEMO_MODE =
   process.env.NEXT_PUBLIC_DEMO_MODE === 'true' && process.env.NODE_ENV !== 'production';
 
+/**
+ * Paths this middleware must never touch.
+ *
+ * The API is served from this same origin in production (a Netlify Function
+ * behind an /api/* redirect), so without this guard the middleware would
+ * intercept every API call, find no session cookie on a bearer-token request,
+ * and redirect it to the login page — turning a JSON API into 307s to HTML.
+ *
+ * The matcher below already excludes them, so this is belt-and-braces: a
+ * regex that stops matching should degrade to "API still works", not "API
+ * silently redirects".
+ */
+function isApiPath(pathname: string): boolean {
+  return (
+    pathname.startsWith('/api/') ||
+    pathname === '/health' ||
+    pathname.startsWith('/.netlify/')
+  );
+}
+
 export async function middleware(request: NextRequest) {
+  if (isApiPath(request.nextUrl.pathname)) {
+    return NextResponse.next();
+  }
+
   // Demo mode has no Supabase project to talk to, so there is no session to
   // check and nothing to redirect. Every route renders from fixtures.
   if (IS_DEMO_MODE) {
@@ -75,7 +99,9 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Everything except static assets and the favicon.
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Everything except the API, the health endpoint, Netlify's own function
+    // paths, and static assets. The API shares this origin in production, so
+    // excluding it here is what keeps it an API rather than a redirect.
+    '/((?!api/|health$|\\.netlify/|_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
