@@ -41,7 +41,12 @@ const serverlessHandler = serverless(app, {
     const [rawPath = '/', query] = request.url.split('?');
     let pathname = rawPath.replace(/^\/\.netlify\/functions\/api/, '') || '/';
 
-    if (pathname !== '/health' && !pathname.startsWith('/api/')) {
+    const alreadyRouted =
+      pathname === '/health' ||
+      pathname.startsWith('/health/') ||
+      pathname.startsWith('/api/');
+
+    if (!alreadyRouted) {
       pathname = `/api${pathname.startsWith('/') ? '' : '/'}${pathname}`;
     }
 

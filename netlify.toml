@@ -42,5 +42,13 @@
   status = 200
   force = true
 
+# /health/ready additionally checks the database, so uptime tooling can tell
+# "the process is up" from "the process can serve requests".
+[[redirects]]
+  from = "/health/*"
+  to = "/.netlify/functions/api/health/:splat"
+  status = 200
+  force = true
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"
