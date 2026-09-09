@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers';
 import type { ApiResponse, PaginationMeta } from '@manas/shared';
 import { getAccessToken } from './supabase/server';
 import { IS_DEMO_MODE } from './demo/config';
@@ -70,6 +71,16 @@ export async function apiFetch<T>(
   const token = await getAccessToken();
   const url = new URL(`${API_URL}/api/v1${path.startsWith('/') ? path : `/${path}`}`);
 
+  // This request leaves the server and comes back in through the platform's
+  // edge, which may sit behind access control of its own — Netlify's visitor
+  // password, for instance, answers an uncookied request with a plain-text
+  // 401 that never reaches the API. Carrying the caller's cookies keeps the
+  // self-request as authorised as the page that triggered it.
+  const cookieHeader = cookies()
+    .getAll()
+    .map((entry) => `${entry.name}=${entry.value}`)
+    .join('; ');
+
   for (const [key, value] of Object.entries(init.query ?? {})) {
     if (value === undefined || value === null || value === '') continue;
     url.searchParams.set(key, String(value));
@@ -80,6 +91,7 @@ export async function apiFetch<T>(
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(cookieHeader ? { cookie: cookieHeader } : {}),
       ...init.headers,
     },
     // Admin data is per-user and per-branch; caching it across requests would
