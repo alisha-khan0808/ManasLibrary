@@ -190,6 +190,32 @@
   a[href]::after {
     content: '';
   }
+
+  /* An invoice must fit one sheet.
+
+     The document is laid out at screen width, which is wider than A4's
+     printable area, so without this the browser either clips it or silently
+     scales it and the height maths stops being predictable. Pinning the sheet
+     to the usable width (210mm − 28mm of margins) and trimming the type makes
+     the printed size deterministic. */
+  .invoice-sheet {
+    width: 182mm !important;
+    max-width: 182mm !important;
+    font-size: 10.5px !important;
+    line-height: 1.42 !important;
+  }
+
+  /* An invoice long enough to need a second sheet should still read as a
+     document: repeat the column headers rather than leaving orphaned rows
+     under nothing. Truncating line items to force one page would hide
+     money, which is never the right trade. */
+  thead {
+    display: table-header-group;
+  }
+
+  tfoot {
+    display: table-footer-group;
+  }
 }
 
 @page {
