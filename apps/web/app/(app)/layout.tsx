@@ -1,8 +1,8 @@
-import { redirect } from 'next/navigation';
 import type { AppUser, Branch } from '@manas/shared';
 import { apiFetch, ApiRequestError } from '@/lib/api';
 import { SessionProvider } from '@/components/SessionProvider';
 import { AppShell } from '@/components/AppShell';
+import { SessionRecovery } from '@/components/SessionRecovery';
 import { IS_DEMO_MODE } from '@/lib/demo/config';
 
 /**
@@ -20,8 +20,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     const profile = await apiFetch<AppUser>('/users/me');
     user = profile.data;
   } catch (error) {
+    // A 401 here means the browser holds a session the API will not accept.
+    // Redirecting to /login cannot fix that: the middleware sees the same
+    // live session and immediately sends the user back, which spins into an
+    // infinite redirect loop. Ask for an explicit sign-out instead — that is
+    // the only action that actually clears the offending session.
     if (error instanceof ApiRequestError && error.status === 401) {
-      redirect('/login');
+      return <SessionRecovery message={error.message} />;
     }
 
     return (
