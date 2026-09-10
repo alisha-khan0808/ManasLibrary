@@ -27,6 +27,13 @@ export function UserFormDialog({ user }: { user?: AppUser }) {
   const [status, setStatus] = useState(user?.status ?? 'ACTIVE');
   const [branchIds, setBranchIds] = useState<string[]>(user?.branch_ids ?? []);
 
+  // How the new account gets its first credential. A reset link is the safer
+  // default — only the account holder ever knows the secret — but setting one
+  // here is what makes in-person onboarding possible.
+  const [setPasswordNow, setSetPasswordNow] = useState(false);
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
   if (!can(Permission.USER_MANAGE)) return null;
 
   // The API enforces this too; mirroring it here avoids offering a role the
@@ -59,14 +66,35 @@ export function UserFormDialog({ user }: { user?: AppUser }) {
         });
         toast.success(result.message);
       } else {
+        if (setPasswordNow && password !== confirmPassword) {
+          setFieldErrors({ confirmPassword: 'The two passwords do not match.' });
+          setLoading(false);
+          return;
+        }
+
         const result = await api.post<AppUser>('/users', {
           email,
           full_name: fullName,
           phone: phone || null,
           role,
           branch_ids: role === UserRole.SUPER_ADMIN ? [] : branchIds,
+          ...(setPasswordNow ? { password } : {}),
         });
         toast.success(result.message);
+      }
+
+      // Clear the form after creating, so adding a second user does not start
+      // pre-filled with the first one's details — and so a typed password does
+      // not sit in a mounted input for the rest of the session.
+      if (!user) {
+        setFullName('');
+        setEmail('');
+        setPhone('');
+        setRole(UserRole.STAFF);
+        setBranchIds([]);
+        setSetPasswordNow(false);
+        setPassword('');
+        setConfirmPassword('');
       }
 
       setOpen(false);
@@ -100,7 +128,7 @@ export function UserFormDialog({ user }: { user?: AppUser }) {
         description={
           user
             ? 'Role and branch changes take effect on their next request.'
-            : 'The user receives a password-reset link to set their own password. No password is stored by this app.'
+            : 'Choose how this account gets its first password.'
         }
         size="sm"
         footer={
@@ -215,6 +243,73 @@ export function UserFormDialog({ user }: { user?: AppUser }) {
                 <p role="alert" className="text-xs text-danger">
                   {fieldErrors.branch_ids}
                 </p>
+              )}
+            </fieldset>
+          )}
+
+          {/* Only on creation. Changing an existing user's password is their
+              own action, through the reset flow. */}
+          {!user && (
+            <fieldset className="space-y-2 border-t border-border pt-4">
+              <legend className="text-sm font-medium text-content">First password</legend>
+
+              <label className="flex items-start gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-surface-sunken">
+                <input
+                  type="radio"
+                  name="credential"
+                  checked={!setPasswordNow}
+                  onChange={() => setSetPasswordNow(false)}
+                  className="mt-0.5 h-4 w-4 border-border text-brand focus:ring-brand"
+                />
+                <span>
+                  <span className="text-content">They set it themselves</span>
+                  <span className="block text-xs text-content-subtle">
+                    Ask them to use “Forgot your password?” on the sign-in page. Nobody but
+                    the account holder ever knows the password.
+                  </span>
+                </span>
+              </label>
+
+              <label className="flex items-start gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-surface-sunken">
+                <input
+                  type="radio"
+                  name="credential"
+                  checked={setPasswordNow}
+                  onChange={() => setSetPasswordNow(true)}
+                  className="mt-0.5 h-4 w-4 border-border text-brand focus:ring-brand"
+                />
+                <span>
+                  <span className="text-content">Set a password now</span>
+                  <span className="block text-xs text-content-subtle">
+                    They can sign in immediately. Share it in person and ask them to change
+                    it — this app cannot force a change on first sign-in.
+                  </span>
+                </span>
+              </label>
+
+              {setPasswordNow && (
+                <div className="space-y-3 pt-1">
+                  <InputField
+                    label="Password"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    minLength={8}
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    error={fieldErrors.password}
+                    hint="At least 8 characters."
+                  />
+                  <InputField
+                    label="Confirm password"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    value={confirmPassword}
+                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    error={fieldErrors.confirmPassword}
+                  />
+                </div>
               )}
             </fieldset>
           )}

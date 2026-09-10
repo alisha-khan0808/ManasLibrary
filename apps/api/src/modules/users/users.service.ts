@@ -186,9 +186,14 @@ export async function createUser(
 ): Promise<AppUser> {
   assertCanManage(auth, input.role, input.branch_ids);
 
+  // With a password supplied the account is usable immediately, so the email
+  // is marked confirmed — there is no verification round-trip to wait for.
+  // Without one, the address stays unconfirmed until the reset link is used,
+  // which is what proves the mailbox belongs to them.
   const { data, error } = await supabaseAdmin.auth.admin.createUser({
     email: input.email,
-    email_confirm: false,
+    email_confirm: Boolean(input.password),
+    ...(input.password ? { password: input.password } : {}),
     user_metadata: { full_name: input.full_name },
   });
 
@@ -228,7 +233,12 @@ export async function createUser(
         action: AuditAction.USER_CREATED,
         entityType: 'user',
         entityId: authUserId,
-        metadata: { role: input.role, branch_count: input.branch_ids.length },
+        metadata: {
+          role: input.role,
+          branch_count: input.branch_ids.length,
+          // How the credential was established, never the credential itself.
+          credential: input.password ? 'password_set_by_admin' : 'reset_link',
+        },
       });
 
       const user = await tx.queryOne<AppUser>(

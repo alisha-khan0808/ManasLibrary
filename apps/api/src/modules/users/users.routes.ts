@@ -36,10 +36,14 @@ usersRouter.post(
   validate({ body: createUserSchema }),
   asyncHandler(async (req, res) => {
     const user = await service.createUser(getAuth(req), req.body);
+    // Creating an account sends no mail, so the message says what the
+    // administrator actually has to do next rather than implying an email.
     return created(
       res,
       user,
-      'User created successfully. They must set a password using the reset link.',
+      req.body.password
+        ? 'User created. They can sign in with the password you set.'
+        : 'User created. Ask them to use “Forgot your password?” to set one.',
     );
   }),
 );
