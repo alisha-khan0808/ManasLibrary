@@ -31,11 +31,20 @@ export function Modal({
 }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
+  // Callers pass an inline arrow for onClose, so its identity changes on every
+  // render. Reading it through a ref keeps the effects below from depending on
+  // it — see the focus effect for why that matters.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  // Escape-to-close and scroll locking. Keyed on `open` alone: re-subscribing
+  // a listener on every keystroke is wasteful but harmless, unlike the focus
+  // effect below.
   useEffect(() => {
     if (!open) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') onCloseRef.current();
     };
 
     document.addEventListener('keydown', onKeyDown);
@@ -43,14 +52,23 @@ export function Modal({
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
-    // Move focus into the dialog so a keyboard user is not left behind it.
-    dialogRef.current?.focus();
-
     return () => {
       document.removeEventListener('keydown', onKeyDown);
       document.body.style.overflow = previousOverflow;
     };
-  }, [open, onClose]);
+  }, [open]);
+
+  // Move focus into the dialog once, when it opens, so a keyboard user is not
+  // left behind it.
+  //
+  // This MUST depend on `open` and nothing else. It previously also depended
+  // on `onClose`, whose identity changes every render, so every keystroke in a
+  // form re-ran this and pulled focus out of the field being typed into —
+  // typing one character, then having to click back in.
+  useEffect(() => {
+    if (!open) return;
+    dialogRef.current?.focus();
+  }, [open]);
 
   if (!open) return null;
 
