@@ -63,6 +63,8 @@ export function StatCard({
   accent,
   icon,
   badge,
+  delta,
+  compact = false,
   progress,
   href,
 }: {
@@ -74,6 +76,10 @@ export function StatCard({
   icon?: IconName;
   /** Small pill in the corner — "All clear", "+3 this week". */
   badge?: { label: string; tone?: 'accent' | 'positive' | 'danger' | 'muted' };
+  /** Trend shown beside the value, e.g. "12%" rising. */
+  delta?: { value: string; direction: 'up' | 'down'; good?: boolean };
+  /** Denser tile so four fit across a phone. */
+  compact?: boolean;
   /** 0–100. Draws a bar beneath the value, for ratios like seat occupancy. */
   progress?: number;
   href?: string;
@@ -87,12 +93,20 @@ export function StatCard({
     muted: 'bg-surface-sunken text-content-muted',
   }[badge?.tone ?? 'accent'];
 
+  // A rising number is usually good, but not for overdue fees — callers say so.
+  const deltaGood = delta ? (delta.good ?? delta.direction === 'up') : true;
+
   const content = (
     <>
       <div className="flex items-start justify-between gap-2">
         {icon ? (
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-chip text-accent">
-            <Icon name={icon} />
+          <span
+            className={clsx(
+              'flex shrink-0 items-center justify-center rounded-xl bg-accent-chip text-accent',
+              compact ? 'h-8 w-8' : 'h-10 w-10',
+            )}
+          >
+            <Icon name={icon} className={compact ? 'h-4 w-4' : 'h-5 w-5'} />
           </span>
         ) : (
           <span />
@@ -109,12 +123,35 @@ export function StatCard({
         )}
       </div>
 
-      <p className="mt-3 text-[11px] font-semibold uppercase tracking-wider text-content-muted">
+      <p
+        className={clsx(
+          'font-semibold uppercase tracking-wider text-content-muted',
+          compact ? 'mt-2 text-[10px] leading-tight' : 'mt-3 text-[11px]',
+        )}
+      >
         {label}
       </p>
-      <p className="mt-0.5 text-2xl font-bold tabular-nums text-content sm:text-[28px] sm:leading-9">
-        {typeof value === 'number' ? formatNumber(value) : value}
-      </p>
+
+      <div className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5">
+        <span
+          className={clsx(
+            'font-bold tabular-nums text-content',
+            compact ? 'text-lg sm:text-xl' : 'text-2xl sm:text-[28px] sm:leading-9',
+          )}
+        >
+          {typeof value === 'number' ? formatNumber(value) : value}
+        </span>
+        {delta && (
+          <span
+            className={clsx(
+              'text-[11px] font-semibold tabular-nums',
+              deltaGood ? 'text-positive' : 'text-danger',
+            )}
+          >
+            <span aria-hidden>{delta.direction === 'up' ? '↑' : '↓'}</span> {delta.value}
+          </span>
+        )}
+      </div>
 
       {typeof progress === 'number' && (
         <div
@@ -128,13 +165,18 @@ export function StatCard({
         </div>
       )}
 
-      {hint && <p className="mt-1.5 text-xs text-content-muted">{hint}</p>}
+      {hint && (
+        <p className={clsx('text-content-muted', compact ? 'mt-1 text-[11px]' : 'mt-1.5 text-xs')}>
+          {hint}
+        </p>
+      )}
     </>
   );
 
   const shell = clsx(
     `accent-${resolved}`,
-    'rounded-card border border-border/70 bg-accent-soft p-4 sm:p-5',
+    'rounded-card border border-border/70 bg-accent-soft',
+    compact ? 'p-2.5 sm:p-4' : 'p-4 sm:p-5',
   );
 
   if (href) {

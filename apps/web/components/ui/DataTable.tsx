@@ -22,6 +22,15 @@ interface DataTableProps<T> {
   emptyAction?: ReactNode;
   error?: string | null;
   caption?: string;
+  /**
+   * Optional phone layout for a row.
+   *
+   * The generic fallback lists every column as a label/value pair, which is
+   * complete but verbose. A list whose rows have an obvious identity — a
+   * student, an invoice — reads far better as a headline with supporting
+   * detail, so those screens supply their own.
+   */
+  mobileRow?: (row: T) => ReactNode;
 }
 
 const ALIGN = {
@@ -43,6 +52,7 @@ export function DataTable<T>({
   emptyAction,
   error,
   caption,
+  mobileRow,
 }: DataTableProps<T>) {
   if (error) {
     return (
@@ -69,7 +79,11 @@ export function DataTable<T>({
     <>
       <ul className="divide-y divide-border md:hidden">
         {rows.map((row) => (
-          <li key={rowKey(row)} className="px-4 py-3.5">
+          <li key={rowKey(row)} className={mobileRow ? '' : 'px-4 py-3.5'}>
+            {mobileRow ? (
+              mobileRow(row)
+            ) : (
+              <div className="contents">
             {leadColumn && (
               <div className="text-sm font-medium text-content">
                 {leadColumn.render(row)}
@@ -86,6 +100,8 @@ export function DataTable<T>({
                   </div>
                 ))}
               </dl>
+            )}
+              </div>
             )}
           </li>
         ))}

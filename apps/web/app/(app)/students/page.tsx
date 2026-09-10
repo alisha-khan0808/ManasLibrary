@@ -7,7 +7,7 @@ import { DataTable } from '@/components/ui/DataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Button } from '@/components/ui/Button';
 import { FilterBar, FilterSelect, Pagination, SearchInput } from '@/components/ui/Filters';
-import { formatDate } from '@/lib/format';
+import { formatDate, initials } from '@/lib/format';
 
 export const metadata: Metadata = { title: 'Students' };
 
@@ -88,6 +88,44 @@ export default async function StudentsPage({
               </Link>
             ) : undefined
           }
+          // A student row has an obvious identity, so on a phone it reads as
+          // name-first with supporting detail rather than as labelled fields.
+          mobileRow={(row) => (
+            <Link
+              href={`/students/${row.id}`}
+              className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-sunken"
+            >
+              <span
+                aria-hidden
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-subtle text-sm font-semibold text-brand"
+              >
+                {initials(row.full_name)}
+              </span>
+
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-semibold text-content">
+                  {row.full_name}
+                </span>
+                <span className="block truncate text-xs text-content-subtle">
+                  {row.student_code}
+                </span>
+                <span className="block truncate text-xs text-content-muted">
+                  M: {row.mobile}
+                </span>
+              </span>
+
+              <span className="flex shrink-0 flex-col items-end gap-1">
+                <StatusBadge status={row.status} />
+                <span className="text-[11px] text-content-subtle">
+                  {formatDate(row.created_at)}
+                </span>
+              </span>
+
+              <span aria-hidden className="shrink-0 text-content-subtle">
+                ›
+              </span>
+            </Link>
+          )}
           columns={[
             {
               key: 'name',

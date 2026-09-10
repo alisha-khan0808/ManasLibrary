@@ -4,6 +4,8 @@ import type { SuperAdminDashboard } from '@manas/shared';
 import { apiFetchSafe } from '@/lib/api';
 import { Card, PageHeader, StatCard } from '@/components/ui/Card';
 import { GreetingBanner } from '@/components/ui/GreetingBanner';
+import { OverviewList } from '@/components/ui/OverviewList';
+import { QuickActions } from '@/components/ui/QuickActions';
 import { DataTable } from '@/components/ui/DataTable';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -91,48 +93,45 @@ export default async function DashboardPage({
         }
       />
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-4 gap-2 sm:gap-4 lg:grid-cols-4">
+        {/* The compact row carries icon, short label and value only. Hints and
+            status pills belong to the larger tiles below — at a quarter of a
+            phone's width they wrap into unreadable stacks. */}
         <StatCard
-          label="Active students"
+          compact
+          label="Students"
           value={metrics.activeStudents}
           accent="blue"
           icon="students"
-          hint={`Out of ${formatNumber(metrics.totalSeats)} total seats`}
           href="/students?status=ACTIVE"
         />
         <StatCard
-          label="Seat occupancy"
-          value={`${occupancy}%`}
+          compact
+          label="Occupied"
+          value={metrics.occupiedSeats}
           accent="green"
           icon="seat"
-          progress={occupancy}
-          badge={{
-            label: occupancy >= 85 ? 'Nearly full' : occupancy >= 50 ? 'Healthy' : 'Low',
-            tone: occupancy >= 85 ? 'danger' : 'accent',
-          }}
-          hint={`${formatNumber(metrics.occupiedSeats)} of ${formatNumber(metrics.totalSeats)} occupied · ${formatNumber(metrics.availableSeats)} free`}
-          href="/seats"
+          href="/seats?status=OCCUPIED"
         />
         <StatCard
-          label="Today's attendance"
+          compact
+          label="Available"
+          value={metrics.availableSeats}
+          accent="teal"
+          icon="seat"
+          href="/seats?status=AVAILABLE"
+        />
+        <StatCard
+          compact
+          label="Attendance"
           value={metrics.todayAttendance}
           accent="amber"
           icon="attendance"
-          badge={{ label: 'On track', tone: 'positive' }}
-          hint={`${formatNumber(metrics.todayAdmissions)} admission(s) today`}
           href="/attendance"
-        />
-        <StatCard
-          label="Today's collection"
-          value={formatMoney(metrics.todayCollection)}
-          accent="purple"
-          icon="rupee"
-          hint="Received today across all methods"
-          href="/payments"
         />
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-3 sm:mt-4 sm:gap-4 lg:grid-cols-4">
+      <div className="mt-2 grid grid-cols-2 gap-2 sm:mt-4 sm:gap-4 lg:grid-cols-4">
         <StatCard
           label="Pending fees"
           value={formatMoney(metrics.pendingFees)}
@@ -192,7 +191,38 @@ export default async function DashboardPage({
         )}
       </div>
 
-      <div className="mt-5 grid gap-4 sm:mt-6 xl:grid-cols-3">
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <OverviewList
+          viewAllHref="/reports"
+          items={[
+            {
+              label: 'New admissions',
+              count: metrics.todayAdmissions,
+              href: '/admissions',
+              icon: 'admissions',
+              accent: 'blue',
+            },
+            {
+              label: 'Renewals due',
+              count: metrics.upcomingRenewals,
+              href: '/fees?status=UPCOMING',
+              icon: 'renew',
+              accent: 'amber',
+            },
+            {
+              label: 'Overdue fees',
+              count: Number(metrics.overdueFees) > 0 ? 1 : 0,
+              href: '/fees?status=OVERDUE',
+              icon: 'alert',
+              accent: 'rose',
+              urgent: true,
+            },
+          ]}
+        />
+        <QuickActions />
+      </div>
+
+      <div className="mt-4 grid gap-4 sm:mt-6 xl:grid-cols-3">
         <Card
           title="Last 14 days"
           description="Daily collection, attendance and new admissions"
